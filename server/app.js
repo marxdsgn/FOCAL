@@ -28,6 +28,7 @@ const mime = {
 };
 export function createHandler({
   bucket,
+  apiHandler,
   verifyUser,
   origin,
   publicConfig,
@@ -51,7 +52,11 @@ export function createHandler({
       }
       if (url.pathname === "/api/config") return json(publicConfig);
       if (url.pathname === "/api/health")
-        return json({ ok: true, version: 3, storageReady: Boolean(bucket) });
+        return json({
+          ok: true,
+          version: 3,
+          storageReady: Boolean(bucket || apiHandler),
+        });
       if (url.pathname === "/api/auth/logout" && request.method === "POST")
         return json({ ok: true }, 200, { "Set-Cookie": sessionCookie("", 0) });
       if (isApi) {
@@ -80,16 +85,19 @@ export function createHandler({
         headers.delete("oai-authenticated-user-email");
         headers.set("x-focal-user-id", user.id);
         headers.set("origin", expected);
-        return api(
-          new Request(new URL(url.pathname + url.search, expected), {
+        const authenticatedRequest = new Request(
+          new URL(url.pathname + url.search, expected),
+          {
             method: request.method,
             headers,
             body: ["GET", "HEAD"].includes(request.method)
               ? undefined
               : await request.arrayBuffer(),
-          }),
-          { BUCKET: bucket },
+          },
         );
+        return apiHandler
+          ? apiHandler(authenticatedRequest, { token, user })
+          : api(authenticatedRequest, { BUCKET: bucket });
       }
       if (!["GET", "HEAD"].includes(request.method))
         return new Response("Method not allowed", { status: 405 });
