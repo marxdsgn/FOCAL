@@ -354,3 +354,59 @@ test("feedback photos are stored separately and cannot be submitted by a differe
   assert.equal(response.headers.get("content-type"), "image/jpeg");
   assert.equal(await response.text(), "abc");
 });
+
+test("the 3D plaza shares real player positions and chat without exposing auth identities", async () => {
+  const bucket = new Bucket();
+  await call(bucket, "alice", "/profile", { name: "Alice", onboarded: true });
+  await call(bucket, "bob", "/profile", { name: "Bob", onboarded: true });
+  let a = await call(bucket, "alice", "/world/presence", {
+    x: 2,
+    z: 7,
+    yaw: 0,
+  });
+  assert.equal(a.status, 200);
+  assert.equal(a.data.players.length, 1);
+  assert.equal(a.data.players[0].uid, undefined);
+  let b = await call(bucket, "bob", "/world/presence", { x: 3, z: 9, yaw: 1 });
+  assert.equal(b.data.players.length, 2);
+  assert.ok(b.data.players.find((p) => p.name === "Alice" && !p.isMe));
+  await call(bucket, "alice", "/world/chat", {
+    text: "Anyone up for a photo walk?",
+  });
+  assert.equal(
+    (await call(bucket, "bob", "/world")).data.messages[0].text,
+    "Anyone up for a photo walk?",
+  );
+  assert.equal(
+    (
+      await call(bucket, "unprepared", "/world/presence", {
+        x: 0,
+        z: 0,
+        yaw: 0,
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (await call(bucket, "alice", "/world/presence", { x: "bad", z: 0, yaw: 0 }))
+      .status,
+    400,
+  );
+  const outside = await call(bucket, "alice", "/world/presence", {
+    x: 999,
+    z: -999,
+    yaw: 0,
+  });
+  const p = outside.data.players.find((p) => p.isMe);
+  assert.equal(p.position.x, 34);
+  assert.equal(p.position.z, -34);
+  const obj = [...bucket.data.keys()].find(
+    (k) =>
+      k.startsWith("world-presence/") &&
+      JSON.parse(bucket.data.get(k).body).uid === "alice",
+  );
+  const stored = JSON.parse(bucket.data.get(obj).body);
+  stored.lastSeen = Date.now() - 21000;
+  await bucket.put(obj, JSON.stringify(stored));
+  assert.equal((await call(bucket, "bob", "/world")).data.players.length, 1);
+});

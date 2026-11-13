@@ -1,0 +1,178 @@
+:root {
+  color: #e5f4ff;
+  background: #070c18;
+}
+body {
+  background: #070c18;
+}
+.primary,
+.uploadbtn {
+  background: #3cdae8;
+  color: #061522;
+  border-radius: 6px;
+  box-shadow: 0 0 20px #23b6da16;
+}
+.primary:hover {
+  background: #7ef5ff;
+}
+.eyebrow,
+.dot {
+  color: #69eaff;
+}
+.notice {
+  background: #0d1b2b;
+  border-color: #234355;
+  color: #a4c2d8;
+}
+.account-modal {
+  background: radial-gradient(ellipse at top, #14213e, #080e1c 70%);
+  border-color: #2f596e;
+}
+.account-modal input,
+.account-modal textarea,
+.account-modal select {
+  background: #081321;
+  color: #daf5fa;
+  border-color: #284354;
+}
+.auth-startup {
+  background: #070c18;
+}
+.auth-startup-story {
+  background: #091428;
+}
+.auth-startup-story::before {
+  opacity: 1;
+  background:
+    radial-gradient(ellipse at 30% 15%, #b02b8b38, transparent 48%),
+    linear-gradient(155deg, #06132444, #0a1026 80%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 45px,
+      #56daee22 46px 47px,
+      transparent 48px 90px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      #0a1525 0 65px,
+      #38daee29 66px 67px,
+      #0a1525 68px 100px
+    );
+}
+.auth-startup-story::after {
+  background: linear-gradient(
+    0deg,
+    #070c18 0%,
+    transparent 45%,
+    #080e19aa 100%
+  );
+}
+.auth-startup-brand span,
+.auth-startup-story h1 em {
+  color: #59eaff;
+  text-shadow: 0 0 35px #21bfed55;
+}
+.auth-startup-story p {
+  color: #b5c9dd;
+}
+.auth-startup-story .eyebrow {
+  color: #fc85d0;
+}
+.auth-startup-features {
+  border-color: #4cd5e538;
+  color: #7bb8c7;
+}
+.auth-startup .auth-startup-form {
+  border-color: #2a6b80;
+  background: linear-gradient(140deg, #132138, #080e1c 80%);
+  box-shadow: 0 0 65px #0ad4ff0d;
+}
+.auth-startup-form > h2 {
+  color: #e0faff;
+}
+.auth-startup-form > p {
+  color: #9bb9cd;
+}
+.auth-startup-form input {
+  border-color: #27455e;
+}
+.auth-startup-form input:focus {
+  outline-color: #53efff;
+}
+.auth-startup-form .auth-switches .back {
+  color: #65d7ea;
+}
+.character-preview {
+  background: #0c1629;
+  border-color: #345779;
+}
+.social-links a {
+  border-color: #24687c;
+  color: #73ecf4;
+}
+.game-world-app > .world-panel {
+  background: #070f1cf5;
+  border-color: #327186;
+  box-shadow: 0 0 70px #00cbe522;
+}
+.world-panel-close {
+  background: #0c2335;
+  color: #81eaf5;
+  border-color: #214b63;
+}
+.game-world-app .pageintro em {
+  color: #67e2ee;
+}
+.game-world-app .battle-settings,
+.game-world-app .leaderboard,
+.game-world-app .profilecard,
+.game-world-app .community-room {
+  background: #0b1425;
+  border-color: #253d56;
+}
+.world-panel .mode.chosen,
+.world-panel .chips .chosen {
+  background: #123345;
+  border-color: #4bdbea;
+}
+.game-world-app .toast {
+  background: #65edee;
+  color: #06212a;
+}
+.game-world-app .room-card {
+  background: linear-gradient(135deg, #122941, #0a1121);
+  border-color: #294a68;
+}
+.game-world-app .pill {
+  background: #0c2837;
+  color: #79ecf3;
+  border-color: #2c6375;
+}
+.game-world-app .photofooter {
+  background: #0c1729;
+}
+.world-panel .tablehead {
+  background: #0c2739;
+}
+.game-world-app .live-entry {
+  background: #0a1425;
+  border-color: #25475e;
+}
+.game-world-app .live-entry.victor {
+  border-color: #67ffff;
+  box-shadow: 0 0 30px #00dbea33;
+}
+.logout-button {
+  background: #0c1d30;
+  color: #77e6f1;
+  border-color: #265973;
+}
+.logout-button:hover:not(:disabled) {
+  background: #17394b;
+  border-color: #70f2ff;
+}
+.game-world-app input:focus-visible,
+.game-world-app button:focus-visible {
+  outline: 2px solid #7cf6ff;
+  outline-offset: 3px;
+}

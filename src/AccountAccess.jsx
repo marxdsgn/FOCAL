@@ -6,7 +6,13 @@ import {
   signOut,
 } from "./auth.js";
 import { PlayerAccount } from "./Community.jsx";
-export default function AccountAccess({ onClose, onSaved, initial }) {
+export default function AccountAccess({
+  onClose,
+  onSaved,
+  initial,
+  fullPage = false,
+  required = false,
+}) {
   const [auth, setAuth] = useState({
       ready: false,
       session: null,
@@ -23,11 +29,12 @@ export default function AccountAccess({ onClose, onSaved, initial }) {
   useEffect(() => {
     if (auth.recovery) setView("reset");
   }, [auth.recovery]);
-  if (auth.ready && auth.session && !auth.recovery)
+  if (auth.ready && auth.session && !auth.recovery && !fullPage)
     return (
       <PlayerAccount
         key={auth.session.user.id}
         initial={initial}
+        required={required}
         onClose={onClose}
         onSaved={onSaved}
         onSignOut={async () => {
@@ -93,27 +100,58 @@ export default function AccountAccess({ onClose, onSaved, initial }) {
   }
   const title =
     view === "signup"
-      ? "Your creative world starts here."
+      ? "Create your free account."
       : view === "forgot"
         ? "Let’s get you back in."
         : view === "reset"
           ? "Choose a new password."
           : "Welcome back, photographer.";
   return (
-    <div className="modal-backdrop">
+    <div className={fullPage ? "auth-startup" : "modal-backdrop"}>
+      {fullPage && (
+        <section
+          className="auth-startup-story"
+          aria-label="FOCAL photography arena"
+        >
+          <a className="auth-startup-brand" href="/">
+            FOCAL<span>.</span>
+          </a>
+          <div>
+            <span className="eyebrow">EVERY SHOT COUNTS</span>
+            <h1>
+              Your lens.
+              <br />
+              <em>Your legacy.</em>
+            </h1>
+            <p>
+              Challenge photographers, share your best frames, and find your
+              creative community.
+            </p>
+          </div>
+          <div className="auth-startup-features">
+            <span>01 · Photo battles</span>
+            <span>02 · Creative missions</span>
+            <span>03 · Your community</span>
+          </div>
+        </section>
+      )}
       <section
-        className="account-modal auth-modal"
-        role="dialog"
-        aria-modal="true"
+        className={
+          "account-modal auth-modal" + (fullPage ? " auth-startup-form" : "")
+        }
+        role={fullPage ? undefined : "dialog"}
+        aria-modal={fullPage ? undefined : "true"}
         aria-labelledby="authTitle"
       >
-        <button
-          className="close-modal"
-          aria-label="Close account form"
-          onClick={onClose}
-        >
-          ×
-        </button>
+        {!fullPage && (
+          <button
+            className="close-modal"
+            aria-label="Close account form"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        )}
         <span className="eyebrow">FOCAL · EVERY SHOT COUNTS</span>
         <h2 id="authTitle">{title}</h2>
         <p>
@@ -229,7 +267,7 @@ export default function AccountAccess({ onClose, onSaved, initial }) {
         )}
         <p className="fineprint">
           Your character, bio and social links are set up after you confirm your
-          account. Browsing and local practice do not need an account.
+          account. Sign in to enter the arena.
         </p>
       </section>
     </div>

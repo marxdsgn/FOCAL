@@ -93,7 +93,13 @@ export function Character({ value = {}, label = "Player character" }) {
     </svg>
   );
 }
-export function PlayerAccount({ onSaved, onClose, initial = null, onSignOut }) {
+export function PlayerAccount({
+  onSaved,
+  onClose,
+  initial = null,
+  onSignOut,
+  required = false,
+}) {
   const [profile, setProfile] = useState(initial),
     [name, setName] = useState(initial?.name || ""),
     [bio, setBio] = useState(initial?.bio || ""),
@@ -186,13 +192,15 @@ export function PlayerAccount({ onSaved, onClose, initial = null, onSignOut }) {
         aria-modal="true"
         aria-labelledby="accountTitle"
       >
-        <button
-          className="close-modal"
-          aria-label="Close player signup"
-          onClick={onClose}
-        >
-          ×
-        </button>
+        {!required && (
+          <button
+            className="close-modal"
+            aria-label="Close player signup"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        )}
         <span className="eyebrow">YOUR PLACE IN THE CREATIVE WORLD</span>
         <h2 id="accountTitle">
           {profile?.onboarded
@@ -329,9 +337,11 @@ export function PlayerAccount({ onSaved, onClose, initial = null, onSignOut }) {
                   ? "SAVE MY PLAYER"
                   : "CREATE MY PLAYER →"}
             </button>
-            <button type="button" className="back" onClick={onClose}>
-              Close
-            </button>
+            {!required && (
+              <button type="button" className="back" onClick={onClose}>
+                Close
+              </button>
+            )}
             {onSignOut && (
               <button
                 type="button"

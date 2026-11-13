@@ -383,6 +383,96 @@ async function communityApi(request, bucket, uid, path, method) {
   fail("Method not allowed.", 405);
 }
 
+async function worldSnapshot(bucket, uid) {
+  const now = Date.now();
+  const listing = await bucket.list({ prefix: "world-presence/", limit: 100 });
+  const records = await Promise.all(
+    listing.objects.map((o) => read(bucket, o.key, null)),
+  );
+  const players = records
+    .filter((p) => p && now - p.lastSeen < 20000)
+    .map(({ uid: owner, lastSeen, ...p }) => ({ ...p, isMe: owner === uid }));
+  const chat = await read(bucket, "world-chat", { messages: [] });
+  return {
+    players,
+    messages: chat.messages.map(({ uid: owner, ...m }) => ({
+      ...m,
+      isMe: owner === uid,
+    })),
+  };
+}
+async function worldApi(request, bucket, uid, path, method) {
+  if (!path.startsWith("/api/world")) return null;
+  if (path === "/api/world" && method === "GET")
+    return json(await worldSnapshot(bucket, uid));
+  if (method !== "POST") fail("Not found.", 404);
+  const profile = await read(bucket, "profiles/" + uid, initialProfile());
+  if (!profile.onboarded || !profile.publicId)
+    fail("Create your player before joining the world.", 403);
+  const data = await body(request);
+  if (path === "/api/world/presence") {
+    if (
+      !["x", "z", "yaw"].every(
+        (k) => typeof data[k] === "number" && Number.isFinite(data[k]),
+      )
+    )
+      fail("Invalid world position.");
+    if (
+      data.height !== undefined &&
+      (typeof data.height !== "number" || !Number.isFinite(data.height))
+    )
+      fail("Invalid jump position.");
+    const position = {
+      height: Math.max(0, Math.min(3, data.height || 0)),
+      x: Math.max(-34, Math.min(34, data.x)),
+      z: Math.max(-34, Math.min(34, data.z)),
+      yaw: Math.atan2(Math.sin(data.yaw), Math.cos(data.yaw)),
+    };
+    await bucket.put(
+      "world-presence/" + profile.publicId,
+      JSON.stringify({
+        uid,
+        publicId: profile.publicId,
+        name: profile.name,
+        character: profile.character,
+        position,
+        lastSeen: Date.now(),
+      }),
+    );
+    return json(await worldSnapshot(bucket, uid));
+  }
+  if (path === "/api/world/chat") {
+    const text = String(data.text || "").trim();
+    if (!text || text.length > 300)
+      fail("Write a message under 300 characters.");
+    const chat = await change(bucket, "world-chat", { messages: [] }, (c) => {
+      const now = Date.now();
+      if (
+        c.messages.filter((m) => m.uid === uid && now - m.time < 10000)
+          .length >= 5
+      )
+        fail("Give the plaza a moment before sending another message.", 429);
+      c.messages.push({
+        id: crypto.randomUUID(),
+        uid,
+        publicId: profile.publicId,
+        name: profile.name,
+        text,
+        time: now,
+      });
+      c.messages = c.messages.slice(-50);
+      return c;
+    });
+    return json({
+      messages: chat.messages.map(({ uid: owner, ...m }) => ({
+        ...m,
+        isMe: owner === uid,
+      })),
+    });
+  }
+  fail("Not found.", 404);
+}
+
 export async function api(request, env) {
   try {
     if (
@@ -443,6 +533,8 @@ export async function api(request, env) {
       );
       return json(profile);
     }
+    const worldResult = await worldApi(request, bucket, uid, path, method);
+    if (worldResult) return worldResult;
     const communityResult = await communityApi(
       request,
       bucket,

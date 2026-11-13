@@ -69,7 +69,21 @@ Set `APP_URL=http://localhost:3000` in `.env` and run `npm start`. Open `http://
 - Standalone accounts are new accounts. Existing ChatGPT-linked accounts and server records are not automatically transferred from the previous hosted version.
 - Local practice progress and the local library are browser-specific. Export your old local backup and import it on the new address if you want to transfer practice progress, photos and notes.
 
+## 3D world
+
+After sign-up/sign-in, a new player creates their character, then spawns in **Neon District**, a real Three.js cyberpunk 3D map. The avatar uses the chosen skin, hair, outfit and accessory. Buildings open the existing game features in world panels: Battle Arena, Mission HQ, Community Café, Photo Gallery, Practice Studio and Hall of Fame. Return to the map to keep exploring.
+
+Controls: **WASD / arrows** walk, **Shift** runs, **Space** jumps, **E** enters a nearby building, and **F** captures an in-world photograph to the local photo journal. Drag rotates the camera; clicking the ground moves toward that point. Touch devices have a movement pad, camera buttons and an Enter button. The Map & places menu provides keyboard-accessible shortcuts and a fallback if a device cannot render WebGL2.
+
+Other characters represent real signed-in players; the app does not invent online users. Player presence updates about every four seconds, and disconnected players disappear after twenty seconds. Shared world chat uses the authenticated backend. Movement positions are social presence, not evidence for ranked results. The game remains a lightweight browser prototype with simpler geometry than its concept art, rather than a finished large-scale MMO.
+
+The city uses rounded, animated character meshes, emissive cyan/magenta signage, a kinetic aperture sculpture, illuminated skyline transit, floating gallery frames and optional rain. In-world photography saves actual rendered frames; it does not use the concept image as a game background.
+
+The world needs WebGL2/hardware acceleration for full 3D. Static shadows are cached and actor shadows use lightweight ground shapes to keep rendering lighter on phones. No new paid service is required.
+
 ## Gameplay
+
+Signed-out visitors start at the sign-up screen, with links to sign in or recover a password. An active session opens the game directly. Use **Log out** in the game header to end the session and return to sign-up.
 
 Previously taken photographs are welcome. Upload from your camera roll/computer or start a five-minute photo hunt. In shared rooms, the server enforces the submission deadline. Spectators get 90 seconds to vote once both entries are submitted. Participants cannot vote in their own battle; duplicate votes and duplicate rewards are blocked. Shared chat refreshes every 2.5 seconds. Community rooms support general conversation, photo sharing and direct feedback replies.
 

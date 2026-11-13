@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Aperture,
@@ -23,9 +23,12 @@ import {
 } from "lucide-react";
 import "./style.css";
 import "./immersion.css";
+import "./cyberpunk.css";
 import LiveRooms, { request } from "./LiveRooms.jsx";
 import ChatRooms, { Character } from "./Community.jsx";
 import PlayerAccount from "./AccountAccess.jsx";
+import AuthGate from "./AuthGate.jsx";
+import { signOut } from "./auth.js";
 import {
   MissionBoard,
   MissionEntry,
@@ -43,6 +46,7 @@ import {
   applyResult,
 } from "./game.js";
 import { useStored, preparePhoto } from "./storage.js";
+const World3D = lazy(() => import("./World3D.jsx"));
 const demoPhotos = [
   {
     url: "./photos/street-0.jpg",
@@ -155,7 +159,10 @@ function App() {
     [celebration, setCelebration] = useState(null),
     [soundEnabled, setSoundEnabled] = useStored("focal_sound", false);
   const [accountOpen, setAccountOpen] = useState(false),
-    [cloudAccount, setCloudAccount] = useState(null);
+    [cloudAccount, setCloudAccount] = useState(null),
+    [loggingOut, setLoggingOut] = useState(false),
+    [profileReady, setProfileReady] = useState(false),
+    [profileError, setProfileError] = useState("");
   useEffect(() => {
     let active = true;
     request("/me")
@@ -163,11 +170,18 @@ function App() {
         if (active) {
           setCloudAccount(p);
           if (p.onboarded) setUsername(p.name);
-          else if (!sessionStorage.getItem("focal_signup_seen"))
-            setAccountOpen(true);
+          else setAccountOpen(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active)
+          setProfileError(
+            "Could not load your player. Please reload to try again.",
+          );
+      })
+      .finally(() => {
+        if (active) setProfileReady(true);
+      });
     return () => {
       active = false;
     };
@@ -189,10 +203,22 @@ function App() {
     return () => window.removeEventListener("focal-session-changed", update);
   }, []);
   function closeAccount() {
+    if (!cloudAccount?.onboarded) return;
     setAccountOpen(false);
     try {
       sessionStorage.setItem("focal_signup_seen", "1");
     } catch {}
+  }
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch {
+      flash("Could not log out. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
   }
   const soundFlag = useRef(soundEnabled);
   soundFlag.current = soundEnabled;
@@ -508,7 +534,54 @@ function App() {
     ["Battle History", Medal],
   ];
   return (
-    <div className="app">
+    <div className="app game-world-app">
+      {cloudAccount?.onboarded ? (
+        <Suspense
+          fallback={
+            <div className="world-loading">Loading the Neon District…</div>
+          }
+        >
+          <World3D
+            profile={cloudAccount}
+            active={
+              page === "Home" &&
+              !accountOpen &&
+              !activeMission &&
+              !hunt &&
+              !celebration
+            }
+            onNavigate={navigate}
+            onProfile={() => setAccountOpen(true)}
+            onLogout={handleLogout}
+            loggingOut={loggingOut}
+            onPhoto={(photo) => {
+              setUploads((prev) => [photo, ...prev].slice(0, 8));
+              flash("In-world photo saved to your Photo Journal.");
+            }}
+          />
+        </Suspense>
+      ) : (
+        <div className="world-loading">
+          <h2>
+            {profileReady
+              ? "Create your photographer."
+              : "Loading your player…"}
+          </h2>
+          <p>
+            {profileError ||
+              "Your character is your passport to the Neon District."}
+          </p>
+          {profileReady && (
+            <button className="primary" onClick={() => setAccountOpen(true)}>
+              CREATE MY CHARACTER
+            </button>
+          )}
+          <button className="back" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
+      )}
+
       <aside className={"sidebar " + (mobile ? "show" : "")}>
         <div className="logo">
           <Aperture size={29} color="#a68cff" strokeWidth={2.5} />
@@ -547,7 +620,13 @@ function App() {
           </div>
         </div>
       </aside>
-      <div className="main">
+      <div
+        className="main world-panel"
+        hidden={page === "Home" || !cloudAccount?.onboarded}
+      >
+        <button className="world-panel-close" onClick={() => navigate("Home")}>
+          ← Back to the world
+        </button>
         <header>
           <button className="mobilemenu" onClick={() => setMobile(!mobile)}>
             {mobile ? <X /> : <Menu />}
@@ -587,10 +666,18 @@ function App() {
                 <span>{identity.avatar}</span>
               )}
             </button>
+            <button
+              className="logout-button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+            >
+              <LogOut size={16} />
+              <span>{loggingOut ? "Logging out…" : "Log out"}</span>
+            </button>
           </div>
         </header>
         <main>
-          {page === "Home" && (
+          {page === "Dashboard" && (
             <>
               <section className="hero">
                 <div className="hero-copy">
@@ -711,7 +798,7 @@ function App() {
               </div>
             </>
           )}
-          {page === "Home" && (
+          {page === "Dashboard" && (
             <MissionBoard
               compact
               completed={completed}
@@ -1168,10 +1255,12 @@ function App() {
       {accountOpen && (
         <PlayerAccount
           initial={cloudAccount}
+          required={!cloudAccount?.onboarded}
           onClose={closeAccount}
           onSaved={(p) => {
             setCloudAccount(p);
             setUsername(p.name);
+            setAccountOpen(false);
             flash("Your player profile is ready. Welcome to FOCAL!");
           }}
         />
@@ -1198,8 +1287,16 @@ function App() {
       {celebration && (
         <Celebration value={celebration} onClose={() => setCelebration(null)} />
       )}
-      {notification && <div className="toast">{notification}</div>}
+      {notification && (
+        <div className="toast" role="status">
+          {notification}
+        </div>
+      )}
     </div>
   );
 }
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  <AuthGate>
+    <App />
+  </AuthGate>,
+);
